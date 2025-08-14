@@ -11,7 +11,7 @@ class Deal extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'title', 'amount', 'status'];
+    protected $fillable = ['user_id', 'title', 'amount', 'owner', 'status', 'priority', 'close_date'];
 
     public function user(): BelongsTo
     {

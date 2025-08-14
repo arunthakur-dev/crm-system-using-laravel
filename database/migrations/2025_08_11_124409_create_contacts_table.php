@@ -16,10 +16,10 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(User::class)->constrained()->onDelete('cascade');
             $table->string('first_name');
-            $table->string('last_name');
-            $table->string('phone');
+            $table->string('last_name')->nullable();
+            $table->string('phone')->nullable();
             $table->string('email')->unique()->nullable();
-            $table->string('owner');
+            $table->string('owner')->nullable();
             $table->string('lead_status')->nullable();
             $table->string('logo')->nullable();
             $table->timestamps();

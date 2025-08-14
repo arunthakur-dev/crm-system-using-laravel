@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
+use App\Models\Contact;
 use App\Models\Deal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +42,17 @@ class DealController extends Controller
             ->paginate($request->get('per_page', 10))
             ->appends($request->all()); // Keep filters/sorting on pagination links
 
-        return view('deals.index', compact('deals', 'sortField', 'sortDirection'));
+            // Fetch related data for dropdowns or linking
+            $allContacts = Contact::where('user_id', Auth::id())->get();
+            $allCompanies = Company::where('user_id', Auth::id())->get();
+
+            return view('deals.index', compact(
+            'deals',
+            'sortField',
+            'sortDirection',
+            'allContacts',
+            'allCompanies'
+        ));
     }
 
     /**
@@ -56,15 +68,36 @@ class DealController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'title'      => 'required|string|max:255',
+            'amount'     => 'required|integer',
+            'owner'      => 'required|string|exists:users,name',
+            'status' => 'nullable|string|max:255',
+            'priority'   => 'nullable|string',
+            'close_date' => 'nullable|date',
+        ]);
+
+        $validated['user_id'] = Auth::id();
+
+        Deal::create($validated);
+
+        if (empty($error)) {
+            return redirect()->back()->with('success', 'Deal created successfully.');
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Deal $deal)
+    public function show($id)
     {
-        //
+        $deal = Deal::with(['companies', 'contacts'])->findOrFail($id);
+
+        return view('deals.show', [
+            'deal' => $deal,
+            'dealCompanies' => $deal->companies,
+            'dealContacts' => $deal->contacts,
+        ]);
     }
 
     /**
@@ -88,6 +121,14 @@ class DealController extends Controller
      */
     public function destroy(Deal $deal)
     {
-        //
+        // check ownership
+        if ($deal->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $deal->delete();
+
+        return redirect()->route('deals.index')
+            ->with('success', 'Deal deleted successfully.');
     }
 }

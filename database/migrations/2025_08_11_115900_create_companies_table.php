@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('logo')->nullable();
             $table->string('domain')->nullable();
-            $table->string('owner');
+            $table->string('owner')->nullable();
             $table->string('phone')->nullable();
             $table->string('industry')->nullable();
             $table->string('country')->nullable();

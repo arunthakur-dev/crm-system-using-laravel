@@ -44,6 +44,8 @@ class ContactController extends Controller
         return view('contacts.index', compact('contacts', 'sortField', 'sortDirection'));
     }
 
+
+
     /**
      * Show the form for creating a new resource.
      */
@@ -57,15 +59,36 @@ class ContactController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
+            'email'      => 'required|email',
+            'owner'      => 'required|string|exists:users,name',
+            'phone'      => 'nullable|string|max:20',
+            'lead_status'=> 'nullable|string|max:255'
+        ]);
+
+        $validated['user_id'] = Auth::id();
+
+        Contact::create($validated);
+
+        if (empty($error)) {
+            return redirect()->back()->with('success', 'Contact created successfully.');
+        }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Contact $contact)
+    public function show($id)
     {
-        //
+        $contact = Contact::with(['companies', 'deals'])->findOrFail($id);
+
+        return view('contacts.show', [
+            'contact' => $contact,
+            'contactCompanies' => $contact->companies,
+            'contactDeals' => $contact->deals,
+        ]);
     }
 
     /**
@@ -89,6 +112,14 @@ class ContactController extends Controller
      */
     public function destroy(Contact $contact)
     {
-        //
+        // check ownership
+        if ($contact->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $contact->delete();
+
+        return redirect()->route('contacts.index')
+            ->with('success', 'Contact deleted successfully.');
     }
 }

@@ -1,16 +1,35 @@
 <div class="mx-10 mb-10 bg-white border border-gray-200 rounded-lg shadow">
     <!-- Header -->
-    <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-        <h1 class="text-2xl font-semibold">{{ Str::plural($entity) }}</h1>
-        <a href=""
-           class="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition">
-            Create {{ $entity }}
+    <div class="flex items-center justify-between border-b border-gray-200 px-4 py-4">
+        <!-- Entity name with hover dropdown -->
+        <div class="relative group">
+            <h1 class="text-2xl font-semibold flex items-center cursor-pointer border border-gray-200 px-4 py-2 rounded-md hover:border-orange-500 transition bg-gray-200 gap-2">
+                {{ Str::plural($entity) }}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </h1>
+
+            <!-- Dropdown menu -->
+            <div class="absolute left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg w-32
+                        opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100
+                        transition-all duration-200 ease-out">
+                <a href="{{ route('companies.index') }}" class="block px-4 py-2 text-md font-semibold hover:bg-gray-200">Companies</a>
+                <a href="{{ route('contacts.index') }}" class="block px-4 py-2 text-md font-semibold hover:bg-gray-200">Contacts</a>
+                <a href="{{ route('deals.index') }}" class="block px-4 py-2 text-md font-semibold hover:bg-gray-200">Deals</a>
+
+            </div>
+        </div>
+
+        <!-- Create button -->
+        <a id="openSidebar" href="#" class="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition">
+            + Create {{ $entity }}
         </a>
     </div>
 
     <!-- Search and Pagination Info -->
     <div class="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        
+
         <!-- Left Side -->
         <div class="flex items-center gap-4">
             <p class="text-gray-600 text-sm">

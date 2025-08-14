@@ -54,7 +54,7 @@ class CompanyController extends Controller
      */
     public function create()
     {
-        return view('companies.create');
+        // return view('companies.create');
     }
 
     /**
@@ -63,38 +63,41 @@ class CompanyController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'domain' => 'nullable|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'logo' => 'nullable|image|max:2048',
+            'name'        => 'required|string|max:255',
+            'domain'      => 'nullable|string|max:255',
+            'owner'       => 'required|string|exists:users,name',
+            'phone'       => 'nullable|string|max:20',
+            'industry'    => 'nullable|string|max:255',
+            'country'     => 'nullable|string|max:255',
+            'state'       => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'notes'       => 'nullable|string',
         ]);
-
-        if ($request->hasFile('logo')) {
-            $validated['logo'] = $request->file('logo')->store('logos', 'public');
-        }
 
         $validated['user_id'] = Auth::id();
 
         Company::create($validated);
 
-        // return redirect()->route('companies.index')->with('success', 'Company created successfully.');
+        if (empty($error)) {
+            return redirect()->back()->with('success', 'Company created successfully.');
+        }
     }
+
 
     /**
      * Display the specified resource.
      */
-     public function show($id)
+    public function show($id)
     {
-        // Fetch company with related contacts and deals eagerly loaded
         $company = Company::with(['contacts', 'deals'])->findOrFail($id);
 
-        // Pass company and relationships to the view
         return view('companies.show', [
             'company' => $company,
             'companyContacts' => $company->contacts,
             'companyDeals' => $company->deals,
         ]);
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -117,6 +120,14 @@ class CompanyController extends Controller
      */
     public function destroy(Company $company)
     {
-        //
+        // check ownership
+        if ($company->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $company->delete();
+
+        return redirect()->route('companies.index')
+            ->with('success', 'Company deleted successfully.');
     }
 }

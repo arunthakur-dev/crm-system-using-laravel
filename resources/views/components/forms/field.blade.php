@@ -2,7 +2,7 @@
 
 <div>
     @if ($label)
-        <x-forms.label :$name :$label />
+        <x-forms.label :$label :$name/>
     @endif
 
     <div class="mt-1">
