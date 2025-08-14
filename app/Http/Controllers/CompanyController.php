@@ -104,7 +104,7 @@ class CompanyController extends Controller
      */
     public function edit(Company $company)
     {
-        //
+        // We will do it
     }
 
     /**
