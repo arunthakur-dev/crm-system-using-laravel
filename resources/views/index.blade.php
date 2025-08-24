@@ -58,7 +58,7 @@
                         @forelse ($recentDeals as $deal)
                             <div class="border border-black/20 p-4 rounded-lg shadow w-full">
                                 <h3 class="font-bold">Title: {{ $deal->title }}</h3>
-                                <p><strong>Amount:</strong> ${{ number_format($deal->amount, 2) }}  |  <strong>Status:</strong> {{ $deal->status }}</p>
+                                <p><strong>Amount:</strong> ${{ $deal->amount }}  |  <strong>Status:</strong> {{ $deal->status }}</p>
                             </div>
                         @empty
                             <div class="border border-black/20 p-4 rounded-lg shadow text-center">

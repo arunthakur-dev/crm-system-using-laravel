@@ -9,17 +9,18 @@
     $type = $type ?? class_basename($entity);
 @endphp
 
-<aside class="fixed mt-0 bg-white border rounded-xl border-gray-200 shadow-lg w-80 h-full p-4">
+<aside class="fixed mt-0 overflow-y-auto bg-white border rounded-xl border-gray-200 shadow-lg w-80 h-full p-4 mr-3">
     <!-- Header -->
     <div class="flex items-center space-x-4 mb-6">
         {{-- Company --}}
         @if ($type === 'Company')
             <div class="flex-shrink-0">
-                @if (!empty($entity->logo))
-                    <img src="{{ asset('uploads/logos/' . $entity->logo) }}" alt="Company Logo" class="w-20 h-20 rounded object-cover border">
+                @if($entity->logo)
+                    <img src="{{ asset('storage/' . $entity->logo) }}" alt="Company Logo" class="w-20 h-20 rounded-full">
                 @else
-                    <img src="{{ asset('images/logo.png') }}" alt="Default Logo" class="w-20 h-20 rounded object-cover border">
+                    <img src="{{ asset('images/default-logo.png') }}" alt="Default Logo" class="w-20 h-20 rounded-full">
                 @endif
+
             </div>
             <div>
                 <h2 class="text-xl font-semibold">{{ $entity->name ?? 'Untitled Company' }}</h2>
@@ -36,10 +37,10 @@
         {{-- Contact --}}
         @elseif ($type === 'Contact')
             <div class="flex-shrink-0">
-                @if (!empty($entity->logo))
-                    <img src="{{ asset('uploads/logos/' . $entity->logo) }}" alt="Contact Logo" class="w-20 h-20 rounded object-cover border">
+                @if($entity->logo)
+                    <img src="{{ asset('storage/' . $entity->logo) }}" alt="Company Logo" class="w-20 h-20 rounded-full">
                 @else
-                    <img src="{{ asset('images/logo.png') }}" alt="Default Logo" class="w-20 h-20 rounded object-cover border">
+                    <img src="{{ asset('images/default-logo.png') }}" alt="Default Logo" class="w-20 h-20 rounded-full">
                 @endif
             </div>
             <div>
@@ -90,15 +91,23 @@
         </div>
 
         @if($deleteRoute)
-            <form action="{{ $deleteRoute }}" method="POST" class="mt-8 " onsubmit="return confirm('Are you sure you want to delete this deal?');">
-                @csrf
-                @method('DELETE')
-                <div class="justify-center items-center">
-                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
-                        Delete {{ $type }}
+            <div class="flex justify-between mt-8 space-x-2">
+                {{-- Edit Button --}}
+                <a id="openEditSidebar" href="#" class="bg-orange-500 text-white px-4 py-2 rounded-md hover:bg-orange-600 transition">
+                    Edit
+                </a>
+
+                {{-- Delete Button --}}
+                <form action="{{ $deleteRoute }}" method="POST"
+                    onsubmit="return confirm('Are you sure you want to delete this {{ strtolower($type) }}?');"
+                    class="flex-1">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="w-fit bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md">
+                        Delete
                     </button>
-                </div>
-            </form>
+                </form>
+            </div>
         @endif
     </section>
 </aside>

@@ -14,7 +14,7 @@ class Company extends Model
     protected $fillable = [
         'user_id', 'name', 'domain', 'owner',
         'phone', 'industry', 'country', 'state',
-        'postal_code', 'notes'
+        'postal_code', 'notes', 'logo'
     ];
 
     public function user(): BelongsTo
@@ -24,11 +24,11 @@ class Company extends Model
 
     public function contacts(): BelongsToMany
     {
-        return $this->belongsToMany(Contact::class, 'company_contact')->withTimestamps();
+        return $this->belongsToMany(Contact::class, 'company_contact', 'company_id', 'contact_id')->withTimestamps();
     }
 
     public function deals(): BelongsToMany
     {
-        return $this->belongsToMany(Deal::class, 'company_deal')->withTimestamps();
+        return $this->belongsToMany(Deal::class, 'company_deal', 'company_id', 'deal_id')->withTimestamps();
     }
 }

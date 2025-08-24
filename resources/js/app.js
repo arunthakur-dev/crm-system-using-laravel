@@ -1,5 +1,6 @@
 import './bootstrap';
 
+// Create sidebar Js
 document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.getElementById('sidebar');
     const openBtn = document.getElementById('openSidebar');
@@ -22,4 +23,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// Edit Sidebar Js
+
+document.addEventListener('DOMContentLoaded', () => {
+    const editSidebar = document.getElementById('editSidebar');
+    const openEditBtn = document.getElementById('openEditSidebar');
+    const closeEditBtn = document.getElementById('closeEditSidebar');
+
+    if(openEditBtn) {
+        openEditBtn.addEventListener('click', e => {
+            e.preventDefault();
+            editSidebar.classList.remove('translate-x-full');
+            editSidebar.classList.add('translate-x-0');
+            document.body.style.overflow = 'hidden';
+        });
+    }
+
+    if(closeEditBtn) {
+        closeEditBtn.addEventListener('click', () => {
+            editSidebar.classList.remove('translate-x-0');
+            editSidebar.classList.add('translate-x-full');
+            document.body.style.overflow = '';
+        });
+    }
+});
+
+
 

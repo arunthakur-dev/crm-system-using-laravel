@@ -56,35 +56,78 @@ class DealController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
+    // store function
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title'      => 'required|string|max:255',
-            'amount'     => 'required|integer',
-            'owner'      => 'required|string|exists:users,name',
+            'title' => 'required|string|max:255',
+            'amount' => 'nullable|string',
+            'owner' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:255',
-            'priority'   => 'nullable|string',
+            'priority' => 'nullable|string|max:255',
             'close_date' => 'nullable|date',
+            'associated_contact' => 'nullable|exists:contacts,id',
+            'associated_company' => 'nullable|exists:companies,id',
         ]);
 
         $validated['user_id'] = Auth::id();
 
-        Deal::create($validated);
+        // 1. Create Deal
+        $deal = Deal::create([
+            'user_id' => $validated['user_id'],
+            'title' => $validated['title'],
+            'amount' => $validated['amount'] ?? null,
+            'owner' => $validated['owner'] ?? null,
+            'status' => $validated['status'] ?? null,
+            'priority' => $validated['priority'] ?? null,
+            'close_date' => $validated['close_date'] ?? null,
+        ]);
 
-        if (empty($error)) {
+        // 2. Associate Contact
+        if (!empty($validated['associated_contact'])) {
+            $deal->contacts()->attach($validated['associated_contact']);
+        }
+
+        // 3. Associate Company
+        if (!empty($validated['associated_company'])) {
+            $deal->companies()->attach($validated['associated_company']);
+        }
+
+        // 4. Handle sidebar auto-linking if parent info is provided
+        if ($request->filled('link_to_id') && $request->filled('link_to_type')) {
+            $parentId = $request->input('link_to_id');
+            $parentType = $request->input('link_to_type');
+
+            switch ($parentType) {
+                case 'deal':
+                    // nothing to link since this is a deal itself
+                    break;
+
+                case 'company':
+                    $company = Company::find($parentId);
+                    if ($company) {
+                        $company->deals()->attach($deal->id);
+                    }
+                    break;
+
+                case 'contact':
+                    $contact = Contact::find($parentId);
+                    if ($contact) {
+                        $contact->deals()->attach($deal->id);
+                    }
+                    break;
+            }
+        }
+
+        if ($request->filled('link_to_id') && $request->filled('link_to_type')) {
+            return redirect()->back()->with('success', 'Deal created and linked successfully.');
+        } else {
             return redirect()->back()->with('success', 'Deal created successfully.');
         }
     }
+
 
     /**
      * Display the specified resource.
@@ -93,28 +136,45 @@ class DealController extends Controller
     {
         $deal = Deal::with(['companies', 'contacts'])->findOrFail($id);
 
+        // Fetch related data for dropdowns or linking
+        $allContacts = Contact::where('user_id', Auth::id())->get();
+        $allCompanies = Company::where('user_id', Auth::id())->get();
+
         return view('deals.show', [
             'deal' => $deal,
             'dealCompanies' => $deal->companies,
             'dealContacts' => $deal->contacts,
+            'allContacts'   => $allContacts,
+            'allCompanies'  => $allCompanies,
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Deal $deal)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Deal $deal)
+    public function update(Request $request, $id)
     {
-        //
+        $validated = $request->validate([
+            'title'              => 'required|string|max:255',
+            'amount'             => 'nullable|string',
+            'owner'              => 'nullable|string|max:255',
+            'status'             => 'nullable|string|max:255',
+            'priority'           => 'nullable|string|max:255',
+            'close_date'         => 'nullable|date',
+        ]);
+
+        // 1. Find the deal
+        $deal = Deal::findOrFail($id);
+
+        // 2. Update deal fields
+        $deal->update($validated);
+
+        return redirect()
+            ->route('deals.show', $deal)
+            ->with('success', 'Deal updated successfully!');
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -130,5 +190,45 @@ class DealController extends Controller
 
         return redirect()->route('deals.index')
             ->with('success', 'Deal deleted successfully.');
+    }
+
+    public function addContacts(Request $request, Deal $deal)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:contacts,id',
+        ]);
+
+        // Attempt to attach without removing existing
+        $alreadyLinked = $deal->contacts()->pluck('contacts.id')->toArray();
+        $newLinks = array_diff($request->ids, $alreadyLinked);
+
+        if (empty($newLinks)) {
+            return back()->with('info', 'Contacts are already linked!');
+        }
+
+        $deal->contacts()->attach($newLinks);
+
+        return back()->with('success', 'Contacts linked successfully!');
+    }
+
+    public function addCompanies(Request $request, Deal $deal)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:companies,id',
+        ]);
+
+        // Attempt to attach without removing existing
+        $alreadyLinked = $deal->companies()->pluck('companies.id')->toArray();
+        $newLinks = array_diff($request->ids, $alreadyLinked);
+
+        if (empty($newLinks)) {
+            return back()->with('info', 'Companies are already linked!');
+        }
+
+        $deal->companies()->attach($newLinks);
+
+        return back()->with('success', 'Companies linked successfully!');
     }
 }

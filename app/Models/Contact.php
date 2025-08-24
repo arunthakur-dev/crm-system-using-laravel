@@ -11,7 +11,7 @@ class Contact extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'first_name', 'last_name', 'email', 'owner', 'phone', 'lead_status'];
+    protected $fillable = ['user_id', 'first_name', 'last_name', 'email', 'owner', 'phone', 'lead_status', 'logo'];
 
     public function user(): BelongsTo
     {
@@ -20,12 +20,12 @@ class Contact extends Model
 
     public function companies(): BelongsToMany
     {
-        return $this->belongsToMany(Company::class, 'company_contact')->withTimestamps();
+        return $this->belongsToMany(Company::class, 'company_contact', 'contact_id', 'company_id')->withTimestamps();
     }
 
     public function deals(): BelongsToMany
     {
-        return $this->belongsToMany(Deal::class, 'contact_deal')->withTimestamps();
+        return $this->belongsToMany(Deal::class, 'contact_deal', 'contact_id', 'deal_id')->withTimestamps();
     }
 
     public function getFullNameAttribute()

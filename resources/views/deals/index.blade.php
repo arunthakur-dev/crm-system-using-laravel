@@ -25,7 +25,7 @@
 
         :fields="[
             ['name' => 'title', 'label' => 'Title', 'type' => 'text', 'placeholder' => 'Enter deal title'],
-            ['name' => 'amount', 'label' => 'Amount', 'type' => 'number', 'placeholder' => 'Enter deal amount'],
+            ['name' => 'amount', 'label' => 'Amount', 'type' => 'text', 'placeholder' => 'Enter deal amount'],
             [
                 'name' => 'owner',
                 'label' => 'Deal Owner',

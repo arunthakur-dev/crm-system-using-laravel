@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Deal;
+use App\Models\Contact;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -48,15 +50,6 @@ class CompanyController extends Controller
         return view('companies.index', compact('companies', 'sortField', 'sortDirection'));
     }
 
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        // return view('companies.create');
-    }
-
     /**
      * Store a newly created resource in storage.
      */
@@ -76,9 +69,33 @@ class CompanyController extends Controller
 
         $validated['user_id'] = Auth::id();
 
-        Company::create($validated);
+        $company = Company::create($validated);
 
-        if (empty($error)) {
+        // Link logic
+        if ($request->filled('link_to_id') && $request->filled('link_to_type')) {
+            $parentId = $request->input('link_to_id');
+            $parentType = $request->input('link_to_type');
+
+            switch ($parentType) {
+                case 'deal':
+                    $deal = Deal::find($parentId);
+                    if ($deal) {
+                        $deal->companies()->attach($company->id);
+                    }
+                    break;
+
+                case 'contact':
+                    $contact = Contact::find($parentId);
+                    if ($contact) {
+                        $contact->companies()->attach($company->id);
+                    }
+                    break;
+            }
+        }
+
+        if ($request->filled('link_to_id') && $request->filled('link_to_type')) {
+            return redirect()->back()->with('success', 'Company created and linked successfully.');
+        } else {
             return redirect()->back()->with('success', 'Company created successfully.');
         }
     }
@@ -91,29 +108,47 @@ class CompanyController extends Controller
     {
         $company = Company::with(['contacts', 'deals'])->findOrFail($id);
 
+        // Fetch related data for dropdowns or linking
+        $allDeals = Deal::where('user_id', Auth::id())->get();
+        $allContacts = Contact::where('user_id', Auth::id())->get();
+
         return view('companies.show', [
             'company' => $company,
             'companyContacts' => $company->contacts,
             'companyDeals' => $company->deals,
+            'allDeals' => $allDeals,
+            'allContacts'  => $allContacts,
         ]);
-    }
-
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Company $company)
-    {
-        // We will do it
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Company $company)
+   public function update(Request $request, Company $company)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'domain' => 'nullable|string|max:255',
+            'phone' => 'nullable|string|max:20',
+            'industry' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'postal_code' => 'nullable|string|max:20',
+            'notes' => 'nullable|string',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', 
+        ]);
+
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('logos', 'public');
+            $validated['logo'] = $path;
+        }
+
+        $company->update($validated);
+
+        return redirect()->route('companies.show', $company)
+            ->with('success', 'Company updated successfully!');
     }
+
 
     /**
      * Remove the specified resource from storage.
@@ -130,4 +165,45 @@ class CompanyController extends Controller
         return redirect()->route('companies.index')
             ->with('success', 'Company deleted successfully.');
     }
+
+    public function addDeals(Request $request, Company $company)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:deals,id',
+        ]);
+
+        // Attempt to attach without removing existing
+        $alreadyLinked = $company->deals()->pluck('deals.id')->toArray();
+        $newLinks = array_diff($request->ids, $alreadyLinked);
+
+        if (empty($newLinks)) {
+            return back()->with('info', 'Deals are already linked!');
+        }
+
+        $company->deals()->attach($newLinks);
+
+        return back()->with('success', 'Deals linked successfully!');
+    }
+
+    public function addContacts(Request $request, Company $company)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:contacts,id',
+        ]);
+
+        // Attempt to attach without removing existing
+        $alreadyLinked = $company->contacts()->pluck('contacts.id')->toArray();
+        $newLinks = array_diff($request->ids, $alreadyLinked);
+
+        if (empty($newLinks)) {
+            return back()->with('info', 'Contacts are already linked!');
+        }
+
+        $company->contacts()->attach($newLinks);
+
+        return back()->with('success', 'Contacts linked successfully!');
+    }
+
 }

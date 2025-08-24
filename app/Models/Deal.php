@@ -12,19 +12,30 @@ class Deal extends Model
     use HasFactory;
 
     protected $fillable = ['user_id', 'title', 'amount', 'owner', 'status', 'priority', 'close_date'];
+    protected $casts = [
+        'close_date' => 'datetime',
+    ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function companies(): BelongsToMany
+    /**
+     * The contacts associated with the deal.
+     */
+    public function contacts()
     {
-        return $this->belongsToMany(Company::class, 'company_deal')->withTimestamps();
+        return $this->belongsToMany(Contact::class, 'contact_deal', 'deal_id', 'contact_id')
+                    ->withTimestamps();
     }
 
-    public function contacts(): BelongsToMany
+    /**
+     * The companies associated with the deal.
+     */
+    public function companies()
     {
-        return $this->belongsToMany(Contact::class, 'contact_deal')->withTimestamps();
+        return $this->belongsToMany(Company::class, 'company_deal', 'deal_id', 'company_id')
+                    ->withTimestamps();
     }
 }

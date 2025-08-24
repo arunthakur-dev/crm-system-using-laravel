@@ -15,7 +15,7 @@ class DealFactory extends Factory
                 return User::find($attributes['user_id'])->name ?? "No Owner";
             },
             'title' => fake()->catchPhrase(),
-            'amount' => fake()->numberBetween(1000, 50000),
+            'amount' => fake()->randomElement(['$ 1000', '$ 2000', '$ 3000', '$ 4000', '$ 5000', '$ 6000', '$ 7000', '$ 8000', '$ 9000', '$ 10000']),
             'status' => fake()->randomElement(['open', 'won', 'lost']),
             'close_date' => fake()->dateTime(),
             'priority' => fake()->randomElement(['low', 'medium', 'high']),
